@@ -63,10 +63,12 @@
 		2C3676B813C5F854003CB7A4 /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C3676B613C5F7FF003CB7A4 /* MobileCoreServices.framework */; };
 		2C544BA01358A24500685545 /* UIImage+Resize.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C544B9C1358A24400685545 /* UIImage+Resize.m */; };
 		2C5B30491371D54500870E6D /* FacilitiesUserLocationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C5B30471371D54500870E6D /* FacilitiesUserLocationViewController.m */; };
+		2C5DE3F216417DA8000C48D2 /* StoryParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C5DE3F116417DA8000C48D2 /* StoryParser.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		2C5DECD513E9BABB00F9C089 /* MobileKeychainServices.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C5DECCA13E9BABB00F9C089 /* MobileKeychainServices.m */; };
 		2C5DECD613E9BABB00F9C089 /* MobileRequestLoginViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C5DECCC13E9BABB00F9C089 /* MobileRequestLoginViewController.m */; };
 		2C5DECD713E9BABB00F9C089 /* MobileRequestOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C5DECCE13E9BABB00F9C089 /* MobileRequestOperation.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		2C5DECDC13E9BEF400F9C089 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C5DECDB13E9BEF400F9C089 /* libz.dylib */; };
+		2C5F1B38163ABFFB00F8DE0E /* StoryUpdateOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C5F1B37163ABFFB00F8DE0E /* StoryUpdateOperation.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		2C603012139EA21700D34F1B /* FacilitiesRepairType.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C603011139EA21700D34F1B /* FacilitiesRepairType.m */; };
 		2C63A1E5143205000068333F /* SettingsTouchstoneViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C63A1E4143205000068333F /* SettingsTouchstoneViewController.m */; };
 		2C6AB74013564F74003B174A /* NSDateFormatter+RelativeString.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C6AB73F13564F74003B174A /* NSDateFormatter+RelativeString.m */; };
@@ -485,6 +487,8 @@
 		2C544B9C1358A24400685545 /* UIImage+Resize.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+Resize.m"; sourceTree = "<group>"; };
 		2C5B30461371D54500870E6D /* FacilitiesUserLocationViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FacilitiesUserLocationViewController.h; sourceTree = "<group>"; };
 		2C5B30471371D54500870E6D /* FacilitiesUserLocationViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FacilitiesUserLocationViewController.m; sourceTree = "<group>"; };
+		2C5DE3F016417DA8000C48D2 /* StoryParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StoryParser.h; sourceTree = "<group>"; };
+		2C5DE3F116417DA8000C48D2 /* StoryParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StoryParser.m; sourceTree = "<group>"; };
 		2C5DECC913E9BABB00F9C089 /* MobileKeychainServices.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MobileKeychainServices.h; sourceTree = "<group>"; };
 		2C5DECCA13E9BABB00F9C089 /* MobileKeychainServices.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MobileKeychainServices.m; sourceTree = "<group>"; };
 		2C5DECCB13E9BABB00F9C089 /* MobileRequestLoginViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MobileRequestLoginViewController.h; sourceTree = "<group>"; };
@@ -492,6 +496,8 @@
 		2C5DECCD13E9BABB00F9C089 /* MobileRequestOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MobileRequestOperation.h; sourceTree = "<group>"; };
 		2C5DECCE13E9BABB00F9C089 /* MobileRequestOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MobileRequestOperation.m; sourceTree = "<group>"; };
 		2C5DECDB13E9BEF400F9C089 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
+		2C5F1B36163ABFFB00F8DE0E /* StoryUpdateOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StoryUpdateOperation.h; sourceTree = "<group>"; };
+		2C5F1B37163ABFFB00F8DE0E /* StoryUpdateOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StoryUpdateOperation.m; sourceTree = "<group>"; };
 		2C603010139EA21700D34F1B /* FacilitiesRepairType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FacilitiesRepairType.h; sourceTree = "<group>"; };
 		2C603011139EA21700D34F1B /* FacilitiesRepairType.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FacilitiesRepairType.m; sourceTree = "<group>"; };
 		2C63A1E3143205000068333F /* SettingsTouchstoneViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SettingsTouchstoneViewController.h; sourceTree = "<group>"; };
@@ -2155,8 +2161,12 @@
 				DEAFF07C110001E300F0573E /* StoryImageView.m */,
 				DE728E4510D6FF4700BFED37 /* StoryThumbnailView.h */,
 				DE728E4610D6FF4700BFED37 /* StoryThumbnailView.m */,
+				2C5F1B36163ABFFB00F8DE0E /* StoryUpdateOperation.h */,
+				2C5F1B37163ABFFB00F8DE0E /* StoryUpdateOperation.m */,
 				DE728E6A10D6FF4700BFED37 /* StoryXMLParser.h */,
 				DE728E6B10D6FF4700BFED37 /* StoryXMLParser.m */,
+				2C5DE3F016417DA8000C48D2 /* StoryParser.h */,
+				2C5DE3F116417DA8000C48D2 /* StoryParser.m */,
 				DE6D570410F05C59006431A8 /* TabScrollerBackgroundView.h */,
 				DE6D570510F05C59006431A8 /* TabScrollerBackgroundView.m */,
 			);
@@ -2921,6 +2931,8 @@
 				2CCF81561636F69900DE273F /* DispatchQueueLogFormatter.m in Sources */,
 				2C2C8A2816386352001A9CF7 /* GDataHTMLDocument.m in Sources */,
 				2C2C8A2916386352001A9CF7 /* GDataXMLNode.m in Sources */,
+				2C5F1B38163ABFFB00F8DE0E /* StoryUpdateOperation.m in Sources */,
+				2C5DE3F216417DA8000C48D2 /* StoryParser.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
