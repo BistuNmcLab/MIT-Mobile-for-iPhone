@@ -1,11 +1,3 @@
-//
-//  StoryParser.m
-//  MIT Mobile
-//
-//  Created by Blake Skinner on 10/31/12.
-//
-//
-
 #import "StoryParser.h"
 #import "StoryUpdateOperation.h"
 
