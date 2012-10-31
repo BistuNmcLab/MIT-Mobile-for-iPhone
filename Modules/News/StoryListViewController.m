@@ -24,7 +24,8 @@
 #define SEARCH_BUTTON_TAG 7947
 #define BOOKMARK_BUTTON_TAG 7948
 
-@interface StoryListViewController (Private)
+@interface StoryListViewController ()
+@property (nonatomic,strong) NSManagedObjectContext *context;
 
 - (void)setupNavScroller;
 - (void)setupNavScrollButtons;
@@ -101,6 +102,12 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
 - (void)loadView
 {
     [super loadView];
+    
+    NSManagedObjectContext *context = [[[NSManagedObjectContext alloc] initWithConcurrencyType:NSMainQueueConcurrencyType] autorelease];
+    context.persistentStoreCoordinator = [[CoreDataManager coreDataManager] persistentStoreCoordinator];
+    context.undoManager = nil;
+    context.stalenessInterval = 0.0;
+    self.context = context;
 
     self.navigationItem.title = @"MIT News";
     self.navigationItem.backBarButtonItem = [[[UIBarButtonItem alloc] initWithTitle:@"Headlines" style:UIBarButtonItemStylePlain target:nil action:nil] autorelease];
@@ -114,18 +121,26 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
 
     NSMutableArray *newCategories = [NSMutableArray array];
     NSInteger i, count = sizeof(buttonCategories) / sizeof(NewsCategoryId);
+    NSPredicate *categoryPredicate = [NSPredicate predicateWithFormat:@"category_id == $CATEGORY"];
     for (i = 0; i < count; i++)
     {
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"category_id == %d", buttonCategories[i]];
-        NSManagedObject *aCategory = [[CoreDataManager objectsForEntity:NewsCategoryEntityName matchingPredicate:predicate] lastObject];
+        NSFetchRequest *request = [NSFetchRequest fetchRequestWithEntityName:NewsCategoryEntityName];
+        request.predicate = [categoryPredicate predicateWithSubstitutionVariables:@{@"CATEGORY" : [NSNumber numberWithInt:buttonCategories[i]]}];
+        
+        NSManagedObject *aCategory = [[self.context executeFetchRequest:request
+                                                                  error:nil] lastObject];
         if (!aCategory)
         {
-            aCategory = [CoreDataManager insertNewObjectForEntityForName:NewsCategoryEntityName];
+            aCategory = [NSEntityDescription insertNewObjectForEntityForName:NewsCategoryEntityName
+                                                      inManagedObjectContext:self.context];
         }
+        
         [aCategory setValue:[NSNumber numberWithInteger:buttonCategories[i]] forKey:@"category_id"];
         [aCategory setValue:[NSNumber numberWithInteger:0] forKey:@"expectedCount"];
         [newCategories addObject:aCategory];
     }
+    
+    [self.context save:nil];
     self.categories = newCategories;
 
     [self pruneStories];
@@ -616,8 +631,10 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
     if (showingBookmarks)
     {
         [self setStatusText:@""];
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"bookmarked == YES"];
-        NSMutableArray *allBookmarkedStories = [CoreDataManager objectsForEntity:NewsStoryEntityName matchingPredicate:predicate];
+        NSFetchRequest *request = [NSFetchRequest fetchRequestWithEntityName:NewsStoryEntityName];
+        request.predicate = [NSPredicate predicateWithFormat:@"bookmarked == YES"];
+        NSMutableArray *allBookmarkedStories = [NSMutableArray arrayWithArray:[self.context executeFetchRequest:request
+                                                                                                          error:nil]];
         self.stories = allBookmarkedStories;
 
     }
@@ -642,9 +659,13 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
 
         // if maxLength == 0, nothing's been loaded from the server this session -- show up to 10 results from core data
         // else show up to maxLength
-        NSMutableArray *results = [NSMutableArray arrayWithArray:[CoreDataManager objectsForEntity:NewsStoryEntityName
-                                                                                 matchingPredicate:predicate
-                                                                                   sortDescriptors:sortDescriptors]];
+        NSFetchRequest *request = [NSFetchRequest fetchRequestWithEntityName:NewsStoryEntityName];
+        request.predicate = predicate;
+        request.sortDescriptors = sortDescriptors;
+        
+        NSError *error = nil;
+        NSMutableArray *results = [NSMutableArray arrayWithArray:[self.context executeFetchRequest:request
+                                                                                             error:&error]];
         if ([results count] && ([[[results objectAtIndex:0] featured] boolValue] == NO))
         {
             [results enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
@@ -693,7 +714,7 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
     {
         [self.xmlParser abort];
     }
-    self.xmlParser = [[[StoryXMLParser alloc] init] autorelease];
+    self.xmlParser = [[[StoryParser alloc] initWithParentContext:self.context] autorelease];
     xmlParser.delegate = self;
     [xmlParser loadStoriesForCategory:self.activeCategoryId
                          afterStoryId:lastStoryId
@@ -751,16 +772,16 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
     {
         [self.xmlParser abort];
     }
-    self.xmlParser = [[[StoryXMLParser alloc] init] autorelease];
+    self.xmlParser = [[[StoryParser alloc] initWithParentContext:self.context] autorelease];
     xmlParser.delegate = self;
 
     [xmlParser loadStoriesforQuery:query afterIndex:((loadMore) ? [self.searchResults count] : 0) count:10];
 }
 
 #pragma mark -
-#pragma mark StoryXMLParser delegation
+#pragma mark StoryParser delegation
 
-- (void)parserDidStartDownloading:(StoryXMLParser *)parser
+- (void)parserDidStartDownloading:(StoryParser *)parser
 {
     if (parser == self.xmlParser)
     {
@@ -769,7 +790,7 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
     }
 }
 
-- (void)parserDidStartParsing:(StoryXMLParser *)parser
+- (void)parserDidStartParsing:(StoryParser *)parser
 {
     if (parser == self.xmlParser)
     {
@@ -777,7 +798,7 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
     }
 }
 
-- (void)parser:(StoryXMLParser *)parser didMakeProgress:(CGFloat)percentDone
+- (void)parser:(StoryParser *)parser didMakeProgress:(CGFloat)percentDone
 {
     if (parser == self.xmlParser)
     {
@@ -785,7 +806,7 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
     }
 }
 
-- (void)parser:(StoryXMLParser *)parser didFailWithDownloadError:(NSError *)error
+- (void)parser:(StoryParser *)parser didFailWithDownloadError:(NSError *)error
 {
     if (parser == self.xmlParser)
     {
@@ -807,7 +828,7 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
     }
 }
 
-- (void)parser:(StoryXMLParser *)parser didFailWithParseError:(NSError *)error
+- (void)parser:(StoryParser *)parser didFailWithParseError:(NSError *)error
 {
     if (parser == self.xmlParser)
     {
@@ -820,7 +841,7 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
     }
 }
 
-- (void)parserDidFinishParsing:(StoryXMLParser *)parser
+- (void)parserDidFinishParsing:(StoryParser *)parser
 {
     if (parser == self.xmlParser)
     {
