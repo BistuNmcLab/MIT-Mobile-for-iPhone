@@ -734,7 +734,12 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
     predicate = [NSPredicate predicateWithFormat:@"searchResult == YES"];
 
     // show everything that comes back
-    NSArray *results = [CoreDataManager objectsForEntity:NewsStoryEntityName matchingPredicate:predicate sortDescriptors:sortDescriptors];
+    NSFetchRequest *request = [NSFetchRequest fetchRequestWithEntityName:NewsStoryEntityName];
+    request.predicate = predicate;
+    request.sortDescriptors = sortDescriptors;
+    
+    NSArray *results = [self.context executeFetchRequest:request
+                                                   error:nil];
 
     NSInteger resultsCount = [results count];
 
