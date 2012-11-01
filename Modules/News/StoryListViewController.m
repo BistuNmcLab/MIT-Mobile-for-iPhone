@@ -257,9 +257,10 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
         dispatch_func = &dispatch_sync;
     }
     
-    (*dispatch_func)(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-        NSManagedObjectContext *context = [[NSManagedObjectContext alloc] init];
-        context.persistentStoreCoordinator = [[CoreDataManager coreDataManager] persistentStoreCoordinator];
+    dispatch_queue_t queue = dispatch_queue_create("news.prune", NULL);
+    (*dispatch_func)(queue, ^{
+        NSManagedObjectContext *context = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
+        context.parentContext = self.context;
         context.undoManager = nil;
         context.mergePolicy = NSOverwriteMergePolicy;
         [context lock];
@@ -353,6 +354,8 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
             [self loadFromCache];
         });
     });
+    
+    dispatch_release(queue);
 }
 
 
