@@ -314,14 +314,24 @@
     importContext.mergePolicy = NSOverwriteMergePolicy;
     importContext.parentContext = self.parentContext;
     
-    NSArray *items = [doc.rootElement nodesForXPath:@"//channel/item"
-                                              error:&error];
+    NSArray *items = nil;
+    
+    if (self.isSearch)
+    {
+        items = [doc.rootElement nodesForXPath:@"./item"
+                                         error:&error];
+    }
+    else
+    {
+        items = [doc.rootElement nodesForXPath:@"//channel/item"
+                                         error:&error];
+    }
+    
     if (error)
     {
         self.error = error;
         return;
     }
-    
     
     NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
     formatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US"];
