@@ -21,7 +21,6 @@
 
 @property (nonatomic,strong) NSDateFormatter *postDateFormatter;
 @property (nonatomic,readonly) BOOL isTopStories;
-@property (nonatomic,readonly) BOOL isQuery;
 + (NSOperationQueue*)networkRequestQueue;
 @end
 
@@ -112,7 +111,8 @@
                                    }
                                    else
                                    {
-                                       [self parseStoryData:data];
+                                       NSData *xmlData = [self preprocessXMLData:data];
+                                       [self parseStoryData:xmlData];
                                    }
                                    
                                    [self finish];
@@ -163,14 +163,14 @@
 }
 
 #pragma mark - Dynamic Properties
-- (BOOL)isQuery
+- (BOOL)isSearch
 {
     return ([self.query length] > 0);
 }
 
 - (BOOL)isTopStories
 {
-    return ((self.category == 0) && self.isQuery);
+    return ((self.category == 0) && self.isSearch);
 }
 
 - (void)setFinished:(BOOL)finished
@@ -197,12 +197,12 @@
 - (NSURLRequest*)urlRequest
 {
     NSURLRequest *request = nil;
-    if (self.isQuery)
+    if (self.isSearch)
     {
         NSMutableString *url = [NSMutableString stringWithString:@"http://web.mit.edu/newsoffice/index.php?option=com_search&view=isearch&ordering=newest"];
-        [url appendFormat:@"&searchWord=%@", [self.query urlEncodeUsingEncoding:NSUTF8StringEncoding]];
+        [url appendFormat:@"&searchword=%@", [self.query urlEncodeUsingEncoding:NSUTF8StringEncoding]];
         [url appendFormat:@"&start=%lu", (unsigned long)self.offset];
-        [url appendFormat:@"&count=%lu", (unsigned long)self.fetchLimit];
+        [url appendFormat:@"&limit=%lu", (unsigned long)self.fetchLimit];
         
         request = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
     }
@@ -241,6 +241,54 @@
     return request;
 }
 
+- (NSData*)preprocessXMLData:(NSData*)data
+{
+    NSData *result = data;
+    
+    if ([data length])
+    {
+        NSMutableString *xmlString = [[NSMutableString alloc] initWithData:data
+                                                                  encoding:NSUTF8StringEncoding];
+        NSString *pattern = [NSString stringWithFormat:@"(%@|%@)",
+                             [NSRegularExpression escapedPatternForString:@"<![CDATA["],
+                             [NSRegularExpression escapedPatternForString:@"]]>"]];
+        NSRegularExpression *cdataRex = [NSRegularExpression regularExpressionWithPattern:pattern
+                                                                                  options:0
+                                                                                    error:nil];
+        __block NSUInteger elementDepth = 0;
+        __block NSUInteger offset = 0;
+        NSUInteger offsetDelta = [@"]]]]><![CDATA[>" length] - [@"]]>" length];
+        
+        [cdataRex enumerateMatchesInString:[xmlString uppercaseString]
+                                   options:NSRegularExpressionSearch
+                                     range:NSMakeRange(0, [xmlString length])
+                                usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
+                                    NSRange range = result.range;
+                                    NSString *string = [xmlString substringWithRange:range];
+                                    
+                                    if ([string caseInsensitiveCompare:@"<![CDATA["] == NSOrderedSame)
+                                    {
+                                        ++elementDepth;
+                                    }
+                                    else if ([string caseInsensitiveCompare:@"]]>"] == NSOrderedSame)
+                                    {
+                                        if (elementDepth > 1)
+                                        {
+                                            NSRange offsetRange = NSMakeRange(range.location + offset, range.length + offset);
+                                            [xmlString replaceCharactersInRange:offsetRange
+                                                                     withString:@"]]]]><![CDATA[>"];
+                                            offset += offsetDelta;
+                                        }
+                                        
+                                        --elementDepth;
+                                    }
+                                }];
+        
+        result = [xmlString dataUsingEncoding:NSUTF8StringEncoding];
+    }
+
+    return result;
+}
 
 - (void)parseStoryData:(NSData*)storyData
 {
@@ -248,9 +296,10 @@
     NSMutableArray *addedStories = [NSMutableArray array];
     NSError *error = nil;
     GDataXMLDocument *doc = [[GDataXMLDocument alloc] initWithData:storyData
-                                                            options:(XML_PARSE_RECOVER |
+                                                            options:((XML_PARSE_RECOVER |
                                                                      XML_PARSE_NOWARNING |
-                                                                     XML_PARSE_NONET)
+                                                                     XML_PARSE_NONET) |
+                                                                     XML_PARSE_NOCDATA)
                                                               error:&error];
     
     if (error)
@@ -262,7 +311,6 @@
     
     NSManagedObjectContext *importContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
     importContext.undoManager = nil;
-    //importContext.persistentStoreCoordinator = [[CoreDataManager coreDataManager] persistentStoreCoordinator];
     importContext.mergePolicy = NSOverwriteMergePolicy;
     importContext.parentContext = self.parentContext;
     
