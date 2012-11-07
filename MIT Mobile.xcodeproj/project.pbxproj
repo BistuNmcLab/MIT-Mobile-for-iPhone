@@ -260,7 +260,6 @@
 		DE728E6C10D6FF4700BFED37 /* StoryThumbnailView.m in Sources */ = {isa = PBXBuildFile; fileRef = DE728E4610D6FF4700BFED37 /* StoryThumbnailView.m */; };
 		DE728E7B10D6FF4700BFED37 /* StoryDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = DE728E6510D6FF4700BFED37 /* StoryDetailViewController.m */; };
 		DE728E7C10D6FF4700BFED37 /* StoryListViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = DE728E6710D6FF4700BFED37 /* StoryListViewController.m */; };
-		DE728E7E10D6FF4700BFED37 /* StoryXMLParser.m in Sources */ = {isa = PBXBuildFile; fileRef = DE728E6B10D6FF4700BFED37 /* StoryXMLParser.m */; };
 		DE7720D910C57DBC00620A7D /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DE7720D810C57DBC00620A7D /* CoreGraphics.framework */; };
 		DE7720E010C57E1C00620A7D /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DE7720DF10C57E1C00620A7D /* QuartzCore.framework */; };
 		DE81CF6210C6BC390085573D /* NewsModule.m in Sources */ = {isa = PBXBuildFile; fileRef = DE81CF6110C6BC390085573D /* NewsModule.m */; };
@@ -874,8 +873,6 @@
 		DE728E6510D6FF4700BFED37 /* StoryDetailViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StoryDetailViewController.m; sourceTree = "<group>"; };
 		DE728E6610D6FF4700BFED37 /* StoryListViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StoryListViewController.h; sourceTree = "<group>"; };
 		DE728E6710D6FF4700BFED37 /* StoryListViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StoryListViewController.m; sourceTree = "<group>"; };
-		DE728E6A10D6FF4700BFED37 /* StoryXMLParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StoryXMLParser.h; sourceTree = "<group>"; };
-		DE728E6B10D6FF4700BFED37 /* StoryXMLParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StoryXMLParser.m; sourceTree = "<group>"; };
 		DE7720D810C57DBC00620A7D /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		DE7720DF10C57E1C00620A7D /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		DE81CF6010C6BC390085573D /* NewsModule.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NewsModule.h; sourceTree = "<group>"; };
@@ -2165,8 +2162,6 @@
 				DE728E4610D6FF4700BFED37 /* StoryThumbnailView.m */,
 				2C5F1B36163ABFFB00F8DE0E /* StoryUpdateOperation.h */,
 				2C5F1B37163ABFFB00F8DE0E /* StoryUpdateOperation.m */,
-				DE728E6A10D6FF4700BFED37 /* StoryXMLParser.h */,
-				DE728E6B10D6FF4700BFED37 /* StoryXMLParser.m */,
 				2C5DE3F016417DA8000C48D2 /* StoryParser.h */,
 				2C5DE3F116417DA8000C48D2 /* StoryParser.m */,
 				DE6D570410F05C59006431A8 /* TabScrollerBackgroundView.h */,
@@ -2829,7 +2824,6 @@
 				DEC02D2D11053A850054BE32 /* StoryImageView.m in Sources */,
 				DE728E7C10D6FF4700BFED37 /* StoryListViewController.m in Sources */,
 				DE728E6C10D6FF4700BFED37 /* StoryThumbnailView.m in Sources */,
-				DE728E7E10D6FF4700BFED37 /* StoryXMLParser.m in Sources */,
 				EB4C4407128B662C00058748 /* SuperThinProgressBar.m in Sources */,
 				DE6D570610F05C59006431A8 /* TabScrollerBackgroundView.m in Sources */,
 				EBBFAF96129C2A23009AAEE0 /* TabViewControl.m in Sources */,
