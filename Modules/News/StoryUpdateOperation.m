@@ -9,7 +9,29 @@
 #import "CoreDataManager.h"
 #import "MITMobileServerConfiguration.h"
 #import "Foundation+MITAdditions.h"
-#import "StoryXMLParser.h"
+
+NSString * const NewsTagItem            = @"item";
+NSString * const NewsTagTitle           = @"title";
+NSString * const NewsTagAuthor          = @"author";
+NSString * const NewsTagCategory        = @"category";
+NSString * const NewsTagLink            = @"link";
+NSString * const NewsTagStoryId         = @"story_id";
+NSString * const NewsTagFeatured        = @"featured";
+NSString * const NewsTagSummary         = @"description";
+NSString * const NewsTagPostDate        = @"postDate";
+NSString * const NewsTagBody            = @"body";
+
+NSString * const NewsTagImage           = @"image";
+NSString * const NewsTagOtherImages     = @"otherImages";
+NSString * const NewsTagThumbnailURL    = @"thumbURL";
+NSString * const NewsTagThumbnail2xURL  = @"thumb152";
+NSString * const NewsTagSmallURL        = @"smallURL";
+NSString * const NewsTagFullURL         = @"fullURL";
+NSString * const NewsTagImageCredits    = @"imageCredits";
+NSString * const NewsTagImageCaption    = @"imageCaption";
+
+NSString * const NewsTagImageWidth      = @"width";
+NSString * const NewsTagImageHeight     = @"height";
 
 @interface StoryUpdateOperation ()
 @property (nonatomic,assign,getter=isFinished) BOOL finished;

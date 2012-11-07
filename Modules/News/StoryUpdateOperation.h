@@ -4,7 +4,30 @@
 @class NewsImage;
 @class NewsImageRep;
 
-typedef void (^StoryUpdateProgressBlock)(NSUInteger storiesParsed,NSUInteger expectedCount);
+extern NSString * const NewsTagItem;
+extern NSString * const NewsTagTitle;
+extern NSString * const NewsTagAuthor;
+extern NSString * const NewsTagCategory;
+extern NSString * const NewsTagLink;
+extern NSString * const NewsTagStoryId;
+extern NSString * const NewsTagFeatured;
+extern NSString * const NewsTagSummary;
+extern NSString * const NewsTagPostDate;
+extern NSString * const NewsTagBody;
+
+extern NSString * const NewsTagImage;
+extern NSString * const NewsTagOtherImages;
+extern NSString * const NewsTagThumbnailURL;
+extern NSString * const NewsTagThumbnail2xURL;
+extern NSString * const NewsTagSmallURL;
+extern NSString * const NewsTagFullURL;
+extern NSString * const NewsTagImageCredits;
+extern NSString * const NewsTagImageCaption;
+
+extern NSString * const NewsTagImageWidth;
+extern NSString * const NewsTagImageHeight;
+
+typedef void (^StoryUpdateProgressBlock)(CGFloat percentDownloaded, NSUInteger storiesParsed,NSUInteger expectedCount);
 typedef void (^StoryUpdateResultBlock)(NSArray* storyIDs,NSArray* addedStoryIDs,NSUInteger offset,NSError* error);
 
 @interface StoryUpdateOperation : NSOperation
