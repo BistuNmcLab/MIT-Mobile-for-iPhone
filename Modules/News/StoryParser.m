@@ -34,13 +34,19 @@
                   afterStoryId:(NSInteger)storyId
                          count:(NSInteger)count
 {
-    if ([self.queue operationCount] > 0)
-        [self.queue cancelAllOperations];
-    
     StoryUpdateOperation *operation = [[StoryUpdateOperation alloc] initWithCategory:category
                                                                          lastStoryID:storyId
                                                                           fetchLimit:count];
     operation.parentContext = self.parentContext;
+    operation.progressBlock = ^(NSUInteger storyCount, NSUInteger expectedCount)
+    {
+        if ([self.delegate respondsToSelector:@selector(parser:didMakeProgress:)])
+        {
+            [self.delegate parser:self
+                  didMakeProgress:((CGFloat)storyCount) / ((CGFloat)expectedCount)];
+        }
+    };
+    
     operation.completeBlock = ^(NSArray* storyIds,NSArray* addedStoryIDs, NSUInteger offset, NSError* error)
     {
         self.totalAvailableResults = [storyIds count];
