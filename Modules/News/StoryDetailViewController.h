@@ -5,9 +5,11 @@
 @class NewsStory;
 @class StoryListViewController;
 
-@interface StoryDetailViewController : ShareDetailViewController <UIWebViewDelegate, MFMailComposeViewControllerDelegate, ShareItemDelegate>
+@protocol StoryListPagingDelegate;
 
-@property (strong) StoryListViewController *newsController;
+@interface StoryDetailViewController : ShareDetailViewController <UIWebViewDelegate, MFMailComposeViewControllerDelegate,ShareItemDelegate>
+
+@property (strong) id<StoryListPagingDelegate> newsController;
 @property (strong) NewsStory *story;
 
 - (void)displayStory:(NewsStory *)aStory;

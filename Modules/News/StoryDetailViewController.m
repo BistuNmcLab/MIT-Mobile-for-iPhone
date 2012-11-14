@@ -1,6 +1,7 @@
 #import <QuartzCore/QuartzCore.h>
 
 #import "StoryDetailViewController.h"
+#import "NewStoryListViewController.h"
 
 #import "MITConstants.h"
 #import "ConnectionDetector.h"
@@ -22,7 +23,6 @@
 
 @implementation StoryDetailViewController
 {
-	StoryListViewController *newsController;
     NewsStory *story;
 }
 
@@ -110,8 +110,8 @@
 }
 
 - (void)displayStory:(NewsStory *)aStory {
-	[self.storyPager setEnabled:[self.newsController canSelectPreviousStory] forSegmentAtIndex:0];
-	[self.storyPager setEnabled:[self.newsController canSelectNextStory] forSegmentAtIndex:1];
+	[self.storyPager setEnabled:[self.newsController canSelectPreviousStory:aStory] forSegmentAtIndex:0];
+	[self.storyPager setEnabled:[self.newsController canSelectNextStory:aStory] forSegmentAtIndex:1];
 
 	NSURL *baseURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] resourcePath] isDirectory:YES];
     NSURL *fileURL = [NSURL URLWithString:@"news/news_story_template.html" relativeToURL:baseURL];
@@ -173,9 +173,9 @@
         NSInteger i = theControl.selectedSegmentIndex;
 		NewsStory *newStory = nil;
         if (i == 0) { // previous
-			newStory = [self.newsController selectPreviousStory];
+			newStory = [self.newsController selectPreviousStory:self.story];
         } else { // next
-			newStory = [self.newsController selectNextStory];
+			newStory = [self.newsController selectNextStory:self.story];
         }
 		if (newStory) {
 			self.story = newStory;
