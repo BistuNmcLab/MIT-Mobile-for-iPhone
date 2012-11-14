@@ -27,7 +27,7 @@ extern NSString * const NewsTagImageCaption;
 extern NSString * const NewsTagImageWidth;
 extern NSString * const NewsTagImageHeight;
 
-typedef void (^StoryUpdateProgressBlock)(CGFloat percentDownloaded, NSUInteger storiesParsed,NSUInteger expectedCount);
+typedef void (^StoryUpdateProgressBlock)(NSUInteger storiesParsed,NSUInteger expectedCount);
 typedef void (^StoryUpdateResultBlock)(NSArray* storyIDs,NSArray* addedStoryIDs,NSUInteger offset,NSError* error);
 
 @interface StoryUpdateOperation : NSOperation

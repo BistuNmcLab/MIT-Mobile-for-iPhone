@@ -334,7 +334,14 @@ NSString * const NewsTagImageHeight     = @"height";
     NSManagedObjectContext *importContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
     importContext.undoManager = nil;
     importContext.mergePolicy = NSOverwriteMergePolicy;
-    importContext.parentContext = self.parentContext;
+    if (self.parentContext)
+    {
+        importContext.parentContext = self.parentContext;
+    }
+    else
+    {
+        importContext.persistentStoreCoordinator = [[CoreDataManager coreDataManager] persistentStoreCoordinator];
+    }
     
     NSArray *items = nil;
     
@@ -361,18 +368,35 @@ NSString * const NewsTagImageHeight     = @"height";
     [formatter setTimeZone:[NSTimeZone localTimeZone]];
     self.postDateFormatter = formatter;
     
+    NSMutableArray *updatedIds = [NSMutableArray array];
+    [items enumerateObjectsUsingBlock:^(GDataXMLNode *storyNode, NSUInteger idx, BOOL *stop) {
+        GDataXMLNode *idNode = [self nodeForXPath:NewsTagStoryId
+                                     withRootNode:storyNode
+                                            error:nil];
+        NSString *storyId = [[idNode childAtIndex:0] stringValue];
+        
+        if ([storyId length])
+        {
+            [updatedIds addObject:[NSNumber numberWithInteger:[storyId integerValue]]];
+        }
+    }];
     
     NSFetchRequest *request = [[NSFetchRequest alloc] initWithEntityName:NewsStoryEntityName];
-    request.predicate = [NSPredicate predicateWithFormat:@"ANY categories.category_id == %lu", (long unsigned)self.category];
+    request.predicate = [NSPredicate predicateWithFormat:@"story_id IN %@",updatedIds];
     NSArray *allStories = [importContext executeFetchRequest:request
-                                                       error:&error];
+                                                        error:&error];
+    
     if (error)
     {
         self.error = error;
         return;
     }
     
+    __block NSUInteger storyCount = 0;
+    [self updateProcessedStoryCount:storyCount
+                 expectedStoryCount:[items count]];
     
+    NSPredicate *storyPredicate = [NSPredicate predicateWithFormat:@"story_id == $STORYID"];
     [items enumerateObjectsUsingBlock:^(GDataXMLNode *storyNode, NSUInteger idx, BOOL *stop) {
         GDataXMLNode *idNode = [self nodeForXPath:NewsTagStoryId
                                      withRootNode:storyNode
@@ -382,11 +406,22 @@ NSString * const NewsTagImageHeight     = @"height";
         
         if ([storyId length])
         {
-            NSArray *objects = [allStories filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"'story_id' == %d",[storyId integerValue]]];
+            NSNumber *storyNumber = [NSNumber numberWithInteger:[storyId integerValue]];
+            NSArray *objects = [allStories filteredArrayUsingPredicate:[storyPredicate predicateWithSubstitutionVariables:@{@"STORYID" : storyNumber}]];
             
             if ([objects count])
             {
                 story = objects[0];
+                
+                if ([objects count] > 1)
+                {
+                    // Remove the dups!
+                    [objects enumerateObjectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(1,[objects count]-1)]
+                                               options:0
+                                            usingBlock:^(NSManagedObject *obj, NSUInteger idx, BOOL *stop) {
+                                                [importContext deleteObject:obj];
+                                            }]; 
+                }
             }
         }
         
@@ -406,7 +441,24 @@ NSString * const NewsTagImageHeight     = @"height";
         {
             (*stop) = YES;
         }
+     
+        ++storyCount;
+        [self updateProcessedStoryCount:storyCount
+                     expectedStoryCount:[items count]];
     }];
+    
+    
+    NSFetchRequest *loadRequest = [NSFetchRequest fetchRequestWithEntityName:NewsStoryEntityName];
+    loadRequest.predicate = [NSPredicate predicateWithFormat:@"(searchResult != nil) && (searchResult == YES)"];
+    NSArray *objects = [importContext executeFetchRequest:loadRequest
+                                                    error:nil];
+    for (NewsStory *obj in objects)
+    {
+        if ([stories containsObject:obj] == NO)
+        {
+            obj.searchResult = [NSNumber numberWithBool:NO];
+        }
+    }
     
     if (self.error || [self isCancelled])
     {
@@ -417,9 +469,11 @@ NSString * const NewsTagImageHeight     = @"height";
         __block NSError* saveError = nil;
         dispatch_sync(dispatch_get_main_queue(), ^{
             [importContext save:&saveError];
+            [importContext.parentContext save:&saveError];
         });
         
         error = saveError;
+        ++storyCount;
         
         if (error)
         {
@@ -635,4 +689,13 @@ NSString * const NewsTagImageHeight     = @"height";
     }
     return NewsTagThumbnailURL;
 }
+
+- (void)updateProcessedStoryCount:(NSUInteger)processedCount expectedStoryCount:(NSUInteger)storyCount
+{
+    if (self.progressBlock)
+    {
+        self.progressBlock(processedCount,storyCount);
+    }
+}
+
 @end
