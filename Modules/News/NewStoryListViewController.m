@@ -41,7 +41,7 @@
 @property (nonatomic,weak) UITableView *tableView;
 @property (nonatomic,weak) UIView *activityView;
 @property (nonatomic,weak) UISearchBar *searchBar;
-@property (nonatomic,strong) UIButton *loadMoreButton;
+@property (nonatomic,strong) UIView *loadMoreView;
 
 @property (nonatomic,assign) BOOL hasBookmarks;
 @property (nonatomic,assign) BOOL isSearching;
@@ -60,9 +60,12 @@ enum : NSInteger {
     StoryViewActivityLabelTag = 6,
     StoryViewActivityProgressTag = 7,
     StoryViewActivityUpdatedTag = 8,
+    
+    StoryTableFooterButtonTag = 9,
+    StoryTableFooterActivityTag = 10,
 
     StoryNavButtonSearchTag = (NSIntegerMax - 1),
-    StoryNavButtonBookmarkTag
+    StoryNavButtonBookmarkTag = NSIntegerMax
 };
 
 @implementation NewStoryListViewController
@@ -254,21 +257,19 @@ enum : NSInteger {
                                   CGRectGetWidth(self.tableView.bounds),
                                   44.0);
         [button setTitle:@"Load More Stories..."
-                        forState:UIControlStateNormal];
-        
+                forState:UIControlStateNormal];
         [button setTitleColor:[UIColor redColor]
-                             forState:UIControlStateNormal];
-        
+                     forState:UIControlStateNormal];
         [button setTitleColor:[UIColor darkGrayColor]
                      forState:UIControlStateDisabled];
-    
-        [button setBackgroundColor:[UIColor whiteColor]];
-        
-        button.showsTouchWhenHighlighted = YES;
         
         [button addTarget:self
                    action:@selector(loadMoreStories:)
          forControlEvents:UIControlEventTouchUpInside];
+    
+        button.backgroundColor = [UIColor whiteColor];
+        button.showsTouchWhenHighlighted = YES;
+        button.tag = StoryTableFooterButtonTag;
         
         UIView *footerView = [[UIView alloc] initWithFrame:button.frame];
         footerView.autoresizingMask = (UIViewAutoresizingFlexibleHeight |
@@ -276,7 +277,7 @@ enum : NSInteger {
         footerView.userInteractionEnabled = YES;
         [footerView addSubview:button];
 
-        self.loadMoreButton = button;
+        self.loadMoreView = footerView;
         [self.tableView setTableFooterView:footerView];
     }
     
