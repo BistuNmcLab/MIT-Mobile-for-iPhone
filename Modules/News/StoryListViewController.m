@@ -6,6 +6,7 @@
 #import "CoreDataManager.h"
 #import "UIKit+MITAdditions.h"
 #import "MITUIConstants.h"
+#import "NewStoryListViewController.h"
 
 #define SCROLL_TAB_HORIZONTAL_PADDING 5.0
 #define SCROLL_TAB_HORIZONTAL_MARGIN  5.0
@@ -24,7 +25,7 @@
 #define SEARCH_BUTTON_TAG 7947
 #define BOOKMARK_BUTTON_TAG 7948
 
-@interface StoryListViewController ()
+@interface StoryListViewController () <StoryListPagingDelegate>
 @property (nonatomic,strong) NSManagedObjectContext *context;
 
 - (void)setupNavScroller;
