@@ -143,7 +143,7 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
     [self.context save:nil];
     self.categories = newCategories;
 
-    [self pruneStories];
+    //[self pruneStories];
     // reduce number of saved stories to 10 when app quits
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(pruneStories)
@@ -219,6 +219,14 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
     navButtons = nil;
     [activityView release];
     activityView = nil;
+}
+
+- (void)viewDidDisappear:(BOOL)animated
+{
+    if (self.parentViewController == nil)
+    {
+        [self pruneStories:NO];
+    }
 }
 
 // Override to allow orientations other than the default portrait orientation.
@@ -362,6 +370,7 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
         [context release];
         
         dispatch_async(dispatch_get_main_queue(), ^{
+            [self.context save:nil];
             [self loadFromCache];
         });
     });
@@ -551,8 +560,8 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
     loadingLabel.font = [UIFont boldSystemFontOfSize:14.0];
     loadingLabel.backgroundColor = [UIColor blackColor];
     loadingLabel.opaque = YES;
-    [activityView addSubview:loadingLabel];
     loadingLabel.hidden = YES;
+    [activityView addSubview:loadingLabel];
     [loadingLabel release];
 
     CGSize labelSize = [loadingLabel.text sizeWithFont:loadingLabel.font forWidth:self.view.bounds.size.width lineBreakMode:UILineBreakModeTailTruncation];
@@ -607,6 +616,7 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
             [self.xmlParser abort]; // cancel previous category's request if it's still going
             self.xmlParser = nil;
         }
+        
         self.activeCategoryId = category;
         self.stories = nil;
         if ([self.stories count] > 0)
@@ -703,10 +713,11 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
         NSInteger resultsCount = [results count];
         if (maxLength == 0)
         {
-            [self loadFromServer:NO]; // this creates a loop which will keep trying until there is at least something in this category
+            //[self loadFromServer:NO]; // this creates a loop which will keep trying until there is at least something in this category
             // TODO: make sure this doesn't become an infinite loop.
-            maxLength = 10;
+            //maxLength = 10;
         }
+        
         if (maxLength > resultsCount)
         {
             maxLength = resultsCount;
@@ -724,15 +735,14 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
     // start new request
     NewsStory *lastStory = [self.stories lastObject];
     NSInteger lastStoryId = (loadMore) ? [lastStory.story_id integerValue] : 0;
-    if (self.xmlParser)
+    if (self.xmlParser == nil)
     {
-        [self.xmlParser abort];
+        self.xmlParser = [[[StoryParser alloc] initWithParentContext:self.context] autorelease];
+        xmlParser.delegate = self;
+        [xmlParser loadStoriesForCategory:self.activeCategoryId
+                             afterStoryId:lastStoryId
+                                    count:10]; // count doesn't do anything at the moment (no server support)
     }
-    self.xmlParser = [[[StoryParser alloc] initWithParentContext:self.context] autorelease];
-    xmlParser.delegate = self;
-    [xmlParser loadStoriesForCategory:self.activeCategoryId
-                         afterStoryId:lastStoryId
-                                count:10]; // count doesn't do anything at the moment (no server support)
 }
 
 - (void)loadSearchResultsFromCache
@@ -875,17 +885,13 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
             }
             length += [self.xmlParser.addedStories count];
             [aCategory setValue:[NSNumber numberWithInteger:length] forKey:@"expectedCount"];
+            
             if (!parser.loadingMore && [self.stories count] > 0)
             {
                 [storyTable scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] atScrollPosition:UITableViewScrollPositionTop animated:NO];
             }
+            
             self.xmlParser = nil;
-            
-            if (parser.loadingMore == NO)
-            {
-                [self pruneStories:NO];
-            }
-            
             [self loadFromCache];
         }
                 // result of a search request
@@ -1198,7 +1204,7 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
 #pragma mark -
 #pragma mark Browsing hooks
 
-- (BOOL)canSelectPreviousStory
+- (BOOL)canSelectPreviousStory:(NewsStory*)currentStory
 {
     NSIndexPath *currentIndexPath = [storyTable indexPathForSelectedRow];
     if (currentIndexPath.row > 0)
@@ -1211,7 +1217,7 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
     }
 }
 
-- (BOOL)canSelectNextStory
+- (BOOL)canSelectNextStory:(NewsStory*)currentStory
 {
     NSIndexPath *currentIndexPath = [storyTable indexPathForSelectedRow];
     if (currentIndexPath.row + 1 < [self.stories count])
@@ -1224,10 +1230,10 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
     }
 }
 
-- (NewsStory *)selectPreviousStory
+- (NewsStory *)selectPreviousStory:(NewsStory*)currentStory
 {
     NewsStory *prevStory = nil;
-    if ([self canSelectPreviousStory])
+    if ([self canSelectPreviousStory:currentStory])
     {
         NSIndexPath *currentIndexPath = [storyTable indexPathForSelectedRow];
         NSIndexPath *prevIndexPath = [NSIndexPath indexPathForRow:currentIndexPath.row - 1 inSection:currentIndexPath.section];
@@ -1237,10 +1243,10 @@ NSString *titleForCategoryId(NewsCategoryId category_id) {
     return prevStory;
 }
 
-- (NewsStory *)selectNextStory
+- (NewsStory *)selectNextStory:(NewsStory*)currentStory
 {
     NewsStory *nextStory = nil;
-    if ([self canSelectNextStory])
+    if ([self canSelectNextStory:currentStory])
     {
         NSIndexPath *currentIndexPath = [storyTable indexPathForSelectedRow];
         NSIndexPath *nextIndexPath = [NSIndexPath indexPathForRow:currentIndexPath.row + 1 inSection:currentIndexPath.section];

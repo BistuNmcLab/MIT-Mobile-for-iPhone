@@ -13,6 +13,14 @@ typedef enum {
     NewsCategoryIdCampus = 99
 } NewsCategoryId;
 
+extern NSString *const NewsCategoryTopNews;
+extern NSString *const NewsCategoryCampus;
+extern NSString *const NewsCategoryEngineering;
+extern NSString *const NewsCategoryScience;
+extern NSString *const NewsCategoryManagement;
+extern NSString *const NewsCategoryArchitecture;
+extern NSString *const NewsCategoryHumanities;
+
 @class NewsStory;
 
 @interface StoryListViewController : UIViewController <UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, MITSearchDisplayDelegate, StoryXMLParserDelegate, NavScrollerDelegate> {
@@ -25,10 +33,6 @@ typedef enum {
     
 	// Nav Scroll View
     NavScrollerView *navScrollView;
-	//UIScrollView *navScrollView;
-	//UIButton *leftScrollButton;
-	//UIButton *rightScrollButton;  
-
 	// Search bits
 	NSString *searchQuery;
 	NSArray *searchResults;
@@ -58,8 +62,8 @@ typedef enum {
 - (void)loadFromServer:(BOOL)loadMore;
 - (void)loadSearchResultsFromCache;
 - (void)loadSearchResultsFromServer:(BOOL)loadMore forQuery:(NSString *)query;
-- (BOOL)canSelectPreviousStory;
-- (BOOL)canSelectNextStory;
-- (NewsStory *)selectPreviousStory;
-- (NewsStory *)selectNextStory;
+- (BOOL)canSelectPreviousStory:(NewsStory*)currentStory;
+- (BOOL)canSelectNextStory:(NewsStory*)currentStory;
+- (NewsStory *)selectPreviousStory:(NewsStory*)currentStory;
+- (NewsStory *)selectNextStory:(NewsStory*)currentStory;
 @end
