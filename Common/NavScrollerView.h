@@ -26,6 +26,7 @@
 - (void)sideButtonPressed:(id)sender;
 - (void)buttonPressed:(id)sender;
 - (void)addButton:(UIButton *)button shouldHighlight:(BOOL)shouldHighlight;
+- (BOOL)selectButtonWithTag:(NSInteger)tag;
 
 @property (nonatomic, assign) id<NavScrollerDelegate> navScrollerDelegate;
 @property (nonatomic, retain) NSMutableArray *buttons;

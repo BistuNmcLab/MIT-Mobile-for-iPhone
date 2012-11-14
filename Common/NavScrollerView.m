@@ -91,6 +91,44 @@ scrollView = _scrollView, navScrollerDelegate, currentXOffset = _currentXOffset;
     self.currentXOffset = 0.0;
 }
 
+- (BOOL)selectButtonWithTag:(NSInteger)tag
+{
+    __block BOOL result = NO;
+    [self.buttons enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+        UIButton *pressedButton = (UIButton*)obj;
+        if ([obj isKindOfClass:[UIButton class]])
+        {
+            if ((pressedButton != _pressedButton) && (pressedButton.tag == tag))
+            {
+                if (_pressedButton.adjustsImageWhenHighlighted)
+                {
+                    [_pressedButton setTitleColor:[UIColor colorWithHexString:@"#E0E0E0"]
+                                         forState:UIControlStateNormal];
+                    [_pressedButton setBackgroundImage:nil
+                                              forState:UIControlStateNormal];
+                }
+                
+                if (pressedButton.adjustsImageWhenHighlighted)
+                {
+                    UIImage *buttonImage = [UIImage imageNamed:MITImageNameScrollTabSelectedTab];
+                    UIImage *stretchableButtonImage = [buttonImage stretchableImageWithLeftCapWidth:15 topCapHeight:0];
+                    
+                    [pressedButton setTitleColor:[UIColor whiteColor]
+                                        forState:UIControlStateNormal];
+                    [pressedButton setBackgroundImage:stretchableButtonImage
+                                             forState:UIControlStateNormal];
+                }
+                
+                _pressedButton = pressedButton;
+                result = YES;
+                (*stop) = YES;
+            }
+        }
+    }];
+    
+    return result;
+}
+
 - (UIButton *)buttonWithTag:(NSInteger)tag {
     UIView *view = [self.contentView viewWithTag:tag];
     if ([view isKindOfClass:[UIButton class]]) {
