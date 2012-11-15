@@ -346,14 +346,18 @@ enum : NSInteger {
 
 - (void)viewWillAppear:(BOOL)animated
 {
-    [self loadStoriesForCategory:self.activeCategoryId
-                   isLoadingMore:NO
-                    forceRefresh:NO];
+    if (self.isSearching == NO)
+    {
+        [self loadStoriesForCategory:self.activeCategoryId
+                       isLoadingMore:NO
+                        forceRefresh:NO];
+    }
+
     [self.navScroller selectButtonWithTag:self.activeCategoryId];
     [self.tableView deselectRowAtIndexPath:[self.tableView indexPathForSelectedRow]
                                   animated:YES];
     [self.searchDisplayController.searchResultsTableView deselectRowAtIndexPath:[self.searchDisplayController.searchResultsTableView indexPathForSelectedRow]
-                                  animated:YES];
+                                                                       animated:YES];
 }
 
 - (void)viewDidDisappear:(BOOL)animated
@@ -654,8 +658,6 @@ enum : NSInteger {
                 [self setTableFooterLoading:NO
                                    animated:YES];
             }
-            [self.queryFetchController performFetch:nil];
-            [self.searchController.searchResultsTableView reloadData];
         };
         
         [self.updateQueue cancelAllOperations];
