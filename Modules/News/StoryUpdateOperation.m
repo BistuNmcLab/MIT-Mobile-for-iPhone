@@ -9,6 +9,7 @@
 #import "CoreDataManager.h"
 #import "MITMobileServerConfiguration.h"
 #import "Foundation+MITAdditions.h"
+#import "StoryListViewController.h"
 
 NSString * const NewsTagItem            = @"item";
 NSString * const NewsTagTitle           = @"title";
@@ -192,7 +193,7 @@ NSString * const NewsTagImageHeight     = @"height";
 
 - (BOOL)isTopStories
 {
-    return ((self.category == 0) && self.isSearch);
+    return ((self.category == NewsCategoryIdTopNews) && self.isSearch);
 }
 
 - (void)setFinished:(BOOL)finished
@@ -531,6 +532,11 @@ NSString * const NewsTagImageHeight     = @"height";
     
     NSInteger category = [elements[NewsTagCategory] integerValue];
     [story addCategory:category];
+    
+    if (category != self.category)
+    {
+        [story addCategory:self.category];
+    }
     
     story.topStory = [NSNumber numberWithBool:(story.topStory || self.isTopStories)];
     
