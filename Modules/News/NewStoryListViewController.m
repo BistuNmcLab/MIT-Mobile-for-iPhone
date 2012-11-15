@@ -251,14 +251,26 @@ enum : NSInteger {
     }
     
     {
+        CGRect footerFrame = CGRectMake(0,
+                                        0,
+                                        CGRectGetWidth(self.tableView.bounds),
+                                        44.0);
+        UIView *footerView = [[UIView alloc] initWithFrame:footerFrame];
+        footerView.autoresizingMask = (UIViewAutoresizingFlexibleHeight |
+                                       UIViewAutoresizingFlexibleWidth);
+        footerView.autoresizesSubviews = YES;
+        footerView.userInteractionEnabled = YES;
+     
+        
         UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
-        button.frame = CGRectMake(0,
-                                  0,
-                                  CGRectGetWidth(self.tableView.bounds),
-                                  44.0);
-        [button setTitle:@"Load More Stories..."
+        button.autoresizingMask = (UIViewAutoresizingFlexibleHeight |
+                                   UIViewAutoresizingFlexibleWidth);
+        button.frame = footerFrame;
+        button.titleLabel.font = [UIFont boldSystemFontOfSize:16];
+        
+        [button setTitle:@"Load more articles..."
                 forState:UIControlStateNormal];
-        [button setTitleColor:[UIColor redColor]
+        [button setTitleColor:[UIColor colorWithHexString:@"#990000"]
                      forState:UIControlStateNormal];
         [button setTitleColor:[UIColor darkGrayColor]
                      forState:UIControlStateDisabled];
@@ -270,15 +282,16 @@ enum : NSInteger {
         button.backgroundColor = [UIColor whiteColor];
         button.showsTouchWhenHighlighted = YES;
         button.tag = StoryTableFooterButtonTag;
-        
-        UIView *footerView = [[UIView alloc] initWithFrame:button.frame];
-        footerView.autoresizingMask = (UIViewAutoresizingFlexibleHeight |
-                                   UIViewAutoresizingFlexibleWidth);
-        footerView.userInteractionEnabled = YES;
         [footerView addSubview:button];
+        
+        UIActivityIndicatorView *activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+        activityView.hidesWhenStopped = YES;
+        activityView.frame = footerFrame;
+        activityView.tag = StoryTableFooterActivityTag;
+        [footerView addSubview:activityView];
+    
 
         self.loadMoreView = footerView;
-        [self.tableView setTableFooterView:footerView];
     }
     
     self.view = mainView;
@@ -296,7 +309,6 @@ enum : NSInteger {
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh
                                                                                            target:self
                                                                                            action:@selector(refresh:)];
-    [self.navScroller selectButtonWithTag:self.activeCategoryId];
     
     {
         NSManagedObjectContext *context = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSMainQueueConcurrencyType];
@@ -305,43 +317,12 @@ enum : NSInteger {
         self.context = context;
     }
     
-    //Setup the categories now that we have a CoreData context
-    {
-        NSError *fetchError = nil;
-        NSArray *categories = [self.context executeFetchRequest:request
-                                                          error:&fetchError];
-        if (fetchError)
-        {
-            DDLogError(@"'%@' fetch failed with error: %@",NewsCategoryEntityName, fetchError);
-        }
-        
-        NSPredicate *categoryPredicate = [NSPredicate predicateWithFormat:@"category_id == $CATEGORY"];
-        for (NSNumber *categoryId in [NewStoryListViewController newsCategoryNames])
-        {
-            NSPredicate *filterPredicate = [categoryPredicate predicateWithSubstitutionVariables:@{ @"CATEGORY" : categoryId }];
-            NSManagedObject *category = [[categories filteredArrayUsingPredicate:filterPredicate] lastObject];
-            
-            if (category == nil)
-            {
-                category = [NSEntityDescription insertNewObjectForEntityForName:NewsCategoryEntityName
-                                                         inManagedObjectContext:self.context];
-                [category setValue:categoryId
-                            forKey:@"category_id"];
-            }
-            
-            // Not used but it needs to be set to zero for legacy reasons
-            [category setValue:@(0)
-                        forKey:@"expectedCount"];
-        }
-        
-        [self.context save:nil];
-    }
+    [self updateCategoryData];
     
     // Configure the fetch results controller! This should grab the list of top stories
     // by default
     {
         NSFetchRequest *request = [NSFetchRequest fetchRequestWithEntityName:NewsStoryEntityName];
-        request.predicate = [NSPredicate predicateWithFormat:@"(topStory != nil) && (topStory == YES)"];
         request.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"postDate" ascending:NO],
                                     [NSSortDescriptor sortDescriptorWithKey:@"featured" ascending:YES],
                                     [NSSortDescriptor sortDescriptorWithKey:@"story_id" ascending:NO]];
@@ -361,7 +342,6 @@ enum : NSInteger {
     }
     
     self.activeCategoryId = NewsCategoryIdTopNews;
-    [self refresh:nil];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -423,10 +403,9 @@ enum : NSInteger {
     // Dispose of any resources that can be recreated.
 }
 
-#pragma mark - Private Methods
+#pragma mark - CoreData Entity Management
 - (void)pruneStories:(BOOL)asyncPrune
 {
-    
     void (*dispatch_func)(dispatch_queue_t,dispatch_block_t) = NULL;
     
     if (asyncPrune)
@@ -537,42 +516,30 @@ enum : NSInteger {
     }
     
     NSManagedObject *category = categories[0];
-    
     NSUInteger lastStoryId = 0;
     NSUInteger fetchCount = 10;
-    StoryUpdateResultBlock updateBlock = nil;
     
     if (loadMore)
     {
-        updateBlock = ^(NSArray* storyIDs,NSArray* addedStoryIDs,NSUInteger offset,NSError* error)
-        {
-            if (error && (error.code != NSUserCancelledError))
-            {
-                
-            }
-            else
-            {
-                NSDate *currentDate = [NSDate date];
-                [category setValue:currentDate
-                            forKey:@"lastUpdated"];
-                
-                NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-                [formatter setDateStyle:NSDateFormatterMediumStyle];
-                [formatter setTimeStyle:NSDateFormatterShortStyle];
-                
-                UILabel *updateLabel = (UILabel*)[self.activityView viewWithTag:StoryViewActivityUpdatedTag];
-                updateLabel.text = [NSString stringWithFormat:@"Last updated %@", [formatter stringFromDate:currentDate]];
-            }
-        };
-        
-        
         id<NSFetchedResultsSectionInfo> sectionInfo = [[self.fetchController sections] objectAtIndex:0];
         NewsStory *lastStory = [[sectionInfo objects] lastObject];
         lastStoryId = [[lastStory story_id] unsignedIntegerValue];
     }
-    else
+    
+    
+    NSDate *lastUpdated = [category valueForKey:@"lastUpdated"];
+    NSDate *updateDate = [NSDate dateWithTimeIntervalSinceNow:self.updateInterval];
+    BOOL shouldUpdate = (loadMore ||
+                         forceRefresh ||
+                         (lastUpdated == nil) ||
+                         ([updateDate compare:lastUpdated] != NSOrderedAscending));
+    if (shouldUpdate)
     {
-        updateBlock = ^(NSArray* storyIDs,NSArray* addedStoryIDs,NSUInteger offset,NSError* error)
+        StoryUpdateOperation *operation =  [[StoryUpdateOperation alloc] initWithCategory:categoryId
+                                                                              lastStoryID:lastStoryId
+                                                                               fetchLimit:fetchCount];
+        operation.parentContext = self.context;
+        operation.completeBlock = ^(NSArray* storyIDs,NSArray* addedStoryIDs,NSUInteger offset,NSError* error)
         {
             if (error && (error.code != NSUserCancelledError))
             {
@@ -591,23 +558,29 @@ enum : NSInteger {
                 UILabel *updateLabel = (UILabel*)[self.activityView viewWithTag:StoryViewActivityUpdatedTag];
                 updateLabel.text = [NSString stringWithFormat:@"Last updated %@", [formatter stringFromDate:currentDate]];
             }
+            
+
+            if (self.isSearching == NO)
+            {
+                if ([storyIDs count])
+                {
+                    self.tableView.tableFooterView = self.loadMoreView;
+                }
+                else
+                {
+                    self.tableView.tableFooterView = nil;
+                }
+                
+                [self setTableFooterLoading:NO
+                                   animated:YES];
+            }
         };
-    }
-    
-    
-    NSDate *lastUpdated = [category valueForKey:@"lastUpdated"];
-    NSDate *updateDate = [NSDate dateWithTimeIntervalSinceNow:self.updateInterval];
-    BOOL shouldUpdate = (loadMore ||
-                         forceRefresh ||
-                         (lastUpdated == nil) ||
-                         ([updateDate compare:lastUpdated] == NSOrderedAscending));
-    if (shouldUpdate)
-    {
-        StoryUpdateOperation *operation =  [[StoryUpdateOperation alloc] initWithCategory:categoryId
-                                                                              lastStoryID:lastStoryId
-                                                                               fetchLimit:fetchCount];
-        operation.parentContext = self.context;
-        operation.completeBlock = updateBlock;
+        
+        if (self.isSearching == NO)
+        {
+            [self setTableFooterLoading:YES
+                               animated:YES];
+        }
         [self.updateQueue addOperation:operation];
     }
 }
@@ -641,12 +614,16 @@ enum : NSInteger {
 
     if ([query length] > 2)
     {
+        [self setTableFooterLoading:YES
+                           animated:YES];
+        
         StoryUpdateOperation *updateOperation = [[StoryUpdateOperation alloc] initWithQuery:query
                                                                                      offset:offset
                                                                                  fetchLimit:10];
         updateOperation.parentContext = self.context;
         updateOperation.completeBlock = ^(NSArray* storyIDs,NSArray* addedStoryIDs,NSUInteger offset,NSError* error)
         {
+            
             if (error && (error.code != NSUserCancelledError))
             {
                 DDLogError(@"error performing update for query '%@'[%lu,%d]: %@", query, (unsigned long)offset, 10, error);
@@ -660,13 +637,23 @@ enum : NSInteger {
                                                           otherButtonTitles:nil];
                 [alertView show];
             }
-            else
+            else if (self.isSearching)
             {
                 self.searchController.searchResultsTableView.hidden = NO;
                 [self.searchController hideSearchOverlayAnimated:YES];
+                
+                if ([storyIDs count])
+                {
+                    self.searchController.searchResultsTableView.tableFooterView = self.loadMoreView;
+                }
+                else
+                {
+                    self.searchController.searchResultsTableView.tableFooterView = nil;
+                }
+                
+                [self setTableFooterLoading:NO
+                                   animated:YES];
             }
-            
-            
             [self.queryFetchController performFetch:nil];
             [self.searchController.searchResultsTableView reloadData];
         };
@@ -675,19 +662,60 @@ enum : NSInteger {
         [self.updateQueue addOperation:updateOperation];
     }
 }
+#pragma mark -
 
 #pragma mark - Dynamic Properties
+- (void)setTableFooterLoading:(BOOL)loading animated:(BOOL)animate
+{
+    UITableView *activeTableView = nil;
+    
+    if (self.isSearching)
+    {
+        activeTableView = self.searchController.searchResultsTableView;
+    }
+    else
+    {
+        activeTableView = self.tableView;
+    }
+    
+    if (activeTableView.tableFooterView)
+    {
+    
+        if (loading)
+        {
+            [UIView animateWithDuration:(animate ? 0.4 : 0)
+                             animations:^{
+                                 UIButton *loadButton = (UIButton*)[self.loadMoreView viewWithTag:StoryTableFooterButtonTag];
+                                 UIActivityIndicatorView *activityView = (UIActivityIndicatorView*)[self.loadMoreView viewWithTag:StoryTableFooterActivityTag];
+                                 loadButton.hidden = YES;
+                                 [activityView startAnimating];
+                             }];
+        }
+        else
+        {
+            [UIView animateWithDuration:(animate ? 0.4 : 0)
+                             animations:^{
+                                 UIButton *loadButton = (UIButton*)[self.loadMoreView viewWithTag:StoryTableFooterButtonTag];
+                                 UIActivityIndicatorView *activityView = (UIActivityIndicatorView*)[self.loadMoreView viewWithTag:StoryTableFooterActivityTag];
+                                 [activityView stopAnimating];
+                                 loadButton.hidden = NO;
+                             }];
+        }
+    }
+}
+
 - (void)setActiveCategoryId:(NSInteger)activeCategoryId
 {
     if (activeCategoryId != _activeCategoryId)
     {
         _activeCategoryId = activeCategoryId;
+        [self.navScroller selectButtonWithTag:activeCategoryId];
         
         if (self.isSearching == NO)
         {
             NSFetchRequest *request = self.fetchController.fetchRequest;
             
-            if (self.activeCategoryId == NewsCategoryIdTopNews)
+            if (NO)//self.activeCategoryId == NewsCategoryIdTopNews)
             {
                 request.predicate = [NSPredicate predicateWithFormat:@"(topStory != nil) && (topStory == YES)"];
             }
@@ -939,7 +967,7 @@ enum : NSInteger {
         NSFetchRequest *request = [NSFetchRequest fetchRequestWithEntityName:NewsStoryEntityName];
         request.predicate = [NSPredicate predicateWithFormat:@"(searchResult != nil) && (searchResult == YES)"];
         request.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"postDate" ascending:NO],
-        [NSSortDescriptor sortDescriptorWithKey:@"story_id" ascending:NO]];
+                                    [NSSortDescriptor sortDescriptorWithKey:@"story_id" ascending:NO]];
         
         NSFetchedResultsController *queryController = [[NSFetchedResultsController alloc] initWithFetchRequest:request
                                                                                           managedObjectContext:self.context
@@ -987,9 +1015,40 @@ enum : NSInteger {
                                 [self.searchController setActive:NO
                                                         animated:YES];
                                 
+                                self.searchController.searchResultsTableView.tableFooterView = nil;
                                 self.isSearching = NO;
                             }
                         }];
+    }
+}
+
+
+#pragma mark - IBAction Handlers
+- (IBAction)loadMoreStories:(id)sender
+{
+    UIButton *loadButton = (UIButton*)[self.loadMoreView viewWithTag:StoryTableFooterButtonTag];
+    UIActivityIndicatorView *activityView = (UIActivityIndicatorView*)[self.loadMoreView viewWithTag:StoryTableFooterActivityTag];
+    [UIView animateWithDuration:0.4
+                     animations:^{
+                         loadButton.hidden = YES;
+                     }
+                     completion:^(BOOL finished) {
+                         if (finished)
+                         {
+                             [activityView startAnimating];
+                         }
+                     }];
+    
+    if (self.isSearching)
+    {
+        [self loadStoriesForQuery:self.searchQuery
+                      loadingMore:YES];
+    }
+    else
+    {
+        [self loadStoriesForCategory:self.activeCategoryId
+                       isLoadingMore:YES
+                        forceRefresh:NO];
     }
 }
 
@@ -999,6 +1058,7 @@ enum : NSInteger {
                    isLoadingMore:NO
                     forceRefresh:YES];
 }
+
 
 #pragma mark - NavScrollerDelegate
 - (void)buttonPressed:(id)sender
@@ -1011,21 +1071,6 @@ enum : NSInteger {
     else
     {
         self.activeCategoryId = pressedButton.tag;
-    }
-}
-
-- (IBAction)loadMoreStories:(id)sender
-{
-    if (self.isSearching)
-    {
-        [self loadStoriesForQuery:self.searchQuery
-                      loadingMore:YES];
-    }
-    else
-    {
-        [self loadStoriesForCategory:self.activeCategoryId
-                       isLoadingMore:YES
-                        forceRefresh:NO];
     }
 }
 
