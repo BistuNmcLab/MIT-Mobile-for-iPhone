@@ -448,19 +448,6 @@ NSString * const NewsTagImageHeight     = @"height";
                      expectedStoryCount:[items count]];
     }];
     
-    
-    NSFetchRequest *loadRequest = [NSFetchRequest fetchRequestWithEntityName:NewsStoryEntityName];
-    loadRequest.predicate = [NSPredicate predicateWithFormat:@"(searchResult != nil) && (searchResult == YES)"];
-    NSArray *objects = [importContext executeFetchRequest:loadRequest
-                                                    error:nil];
-    for (NewsStory *obj in objects)
-    {
-        if ([stories containsObject:obj] == NO)
-        {
-            obj.searchResult = [NSNumber numberWithBool:NO];
-        }
-    }
-    
     if (self.error || [self isCancelled])
     {
         return;
