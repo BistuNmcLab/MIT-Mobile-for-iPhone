@@ -308,7 +308,6 @@ enum : NSInteger {
     //Setup the categories now that we have a CoreData context
     {
         NSError *fetchError = nil;
-        NSFetchRequest *request = [NSFetchRequest fetchRequestWithEntityName:NewsCategoryEntityName];
         NSArray *categories = [self.context executeFetchRequest:request
                                                           error:&fetchError];
         if (fetchError)
@@ -385,6 +384,39 @@ enum : NSInteger {
     }
 }
 
+- (void)updateCategoryData
+{
+    NSError *fetchError = nil;
+    NSFetchRequest *request = [NSFetchRequest fetchRequestWithEntityName:NewsCategoryEntityName];
+    NSArray *categories = [self.context executeFetchRequest:request
+                                                      error:&fetchError];
+    if (fetchError)
+    {
+        DDLogError(@"'%@' fetch failed with error: %@",NewsCategoryEntityName, fetchError);
+    }
+    
+    NSPredicate *categoryPredicate = [NSPredicate predicateWithFormat:@"category_id == $CATEGORY"];
+    for (NSNumber *categoryId in [NewStoryListViewController newsCategoryNames])
+    {
+        NSPredicate *filterPredicate = [categoryPredicate predicateWithSubstitutionVariables:@{ @"CATEGORY" : categoryId }];
+        NSManagedObject *category = [[categories filteredArrayUsingPredicate:filterPredicate] lastObject];
+        
+        if (category == nil)
+        {
+            category = [NSEntityDescription insertNewObjectForEntityForName:NewsCategoryEntityName
+                                                     inManagedObjectContext:self.context];
+            [category setValue:categoryId
+                        forKey:@"category_id"];
+        }
+        
+        // Not used but it needs to be set to zero for legacy reasons
+        [category setValue:@(0)
+                    forKey:@"expectedCount"];
+    }
+    
+    [self.context save:nil];
+}
+
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
@@ -408,78 +440,82 @@ enum : NSInteger {
     
     dispatch_queue_t queue = dispatch_queue_create("news.prune", NULL);
     (*dispatch_func)(queue, ^{
-        NSManagedObjectContext *context = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
-        context.parentContext = self.context;
-        context.undoManager = nil;
-        context.mergePolicy = NSOverwriteMergePolicy;
-        [context lock];
+        static NSUInteger articleSaveCount = 10;
+        
+        NSManagedObjectContext *pruneContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
+        pruneContext.parentContext = self.context;
+        pruneContext.undoManager = nil;
+        pruneContext.mergePolicy = NSOverwriteMergePolicy;
+        [pruneContext lock];
+        
+        NSMutableSet *deleteSet = [NSMutableSet set];
         
         NSPredicate *notBookmarkedPredicate = [NSPredicate predicateWithFormat:@"(bookmarked == nil) || (bookmarked == NO)"];
+        NSPredicate *templatePredicate = [NSPredicate predicateWithFormat:@"ANY categories.category_id == $CATEGORY"];
+        NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:NewsStoryEntityName];
+        fetchRequest.sortDescriptors = [NSArray arrayWithObject:[NSSortDescriptor sortDescriptorWithKey:@"postDate" ascending:NO]];
         
-        {
-            NSEntityDescription *newsStoryEntity = [NSEntityDescription entityForName:NewsStoryEntityName
-                                                               inManagedObjectContext:context];
-            
-            NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
-            fetchRequest.entity = newsStoryEntity;
-            fetchRequest.predicate = notBookmarkedPredicate;
-            fetchRequest.sortDescriptors = [NSArray arrayWithObject:[NSSortDescriptor sortDescriptorWithKey:@"postDate" ascending:NO]];
-            
-            NSArray *stories = [context executeFetchRequest:fetchRequest
-                                                      error:NULL];
-            
-            NSMutableDictionary *savedArticles = [NSMutableDictionary dictionary];
-            for (NewsStory *story in stories)
+        [[NewStoryListViewController newsCategoryOrder] enumerateObjectsUsingBlock:^(NSNumber *categoryId, NSUInteger idx, BOOL *stop) {
+            if ([categoryId integerValue] == NewsCategoryIdTopNews)
             {
-                BOOL storySaved = NO;
-                
-                for (NSManagedObject *category in story.categories)
-                {
-                    NSNumber *categoryID = [category valueForKey:@"category_id"];
-                    NSMutableSet *categoryStories = [savedArticles objectForKey:categoryID];
-                    
-                    if (categoryStories == nil)
-                    {
-                        categoryStories = [NSMutableSet set];
-                        [savedArticles setObject:categoryStories
-                                          forKey:categoryID];
-                    }
-                    
-                    BOOL shouldSave = storySaved = (([categoryStories count] < 10) &&
-                                                    (story.postDate != nil) &&
-                                                    ([story.postDate compare:[NSDate date]] != NSOrderedDescending));
-                    if (shouldSave)
-                    {
-                        [categoryStories addObject:story];
-                    }
-                }
-                
-                if (storySaved == NO)
-                {
-                    [context deleteObject:story];
-                }
+                return;
             }
             
-            [savedArticles enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
-                DDLogVerbose(@"Category %@ has %d articles after pruning", key, [obj count]);
-            }];
+            NSPredicate *catPredicate = [templatePredicate predicateWithSubstitutionVariables:@{ @"CATEGORY" : categoryId }];
+            fetchRequest.predicate = [[NSCompoundPredicate alloc] initWithType:NSAndPredicateType
+                                                                 subpredicates:@[notBookmarkedPredicate,
+                                                                                    catPredicate]];
+            NSArray *objects = [pruneContext executeFetchRequest:fetchRequest
+                                                           error:nil];
+            DDLogVerbose(@"fetched %d objects for category %@", [objects count], categoryId);
+            NSInteger maxLen = MIN(articleSaveCount,[objects count]);
+            
+            [objects enumerateObjectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, maxLen)]
+                                       options:0
+                                    usingBlock:^(NSManagedObject *obj, NSUInteger idx, BOOL *stop) {
+                                        [deleteSet removeObject:[obj objectID]];
+                                    }];
+            if ([objects count] > articleSaveCount)
+            {
+                [objects enumerateObjectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(articleSaveCount,[objects count] - articleSaveCount)]
+                                           options:0
+                                        usingBlock:^(NSManagedObject *obj, NSUInteger idx, BOOL *stop) {
+                                            [deleteSet addObject:[obj objectID]];
+                                        }];
+            }
+        }];
+        
+        for (NSManagedObjectID *objectId in deleteSet)
+        {
+            [pruneContext deleteObject:[pruneContext objectWithID:objectId]];
         }
         
         __block NSError *error = nil;
+        [pruneContext save:&error];
+        [pruneContext unlock];
+        
         dispatch_sync(dispatch_get_main_queue(), ^{
-            [context save:&error];
+            if (error == nil)
+            {
+                [pruneContext.parentContext save:&error];
+            }
         });
         
         if (error)
         {
-            DDLogError(@"[News] Failed to save pruning context: %@", [error localizedDescription]);
+            DDLogError(@"failed to save pruning context: %@", [error localizedDescription]);
         }
-        
-        [context unlock];
-        
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [_context save:nil];
-        });
+        else if (ddLogLevel == LOG_LEVEL_VERBOSE)
+        {
+            for (NSNumber *categoryId in [NewStoryListViewController newsCategoryOrder])
+            {
+                NSFetchRequest *countRequest = [NSFetchRequest fetchRequestWithEntityName:NewsStoryEntityName];
+                countRequest.predicate = [templatePredicate predicateWithSubstitutionVariables:@{ @"CATEGORY" : categoryId }];
+                NSUInteger count = [pruneContext countForFetchRequest:countRequest
+                                                                error:nil];
+                DDLogVerbose(@"category %@ has %lu articles after pruning", categoryId, (unsigned long)count);
+            }
+        }
     });
     
     dispatch_release(queue);
