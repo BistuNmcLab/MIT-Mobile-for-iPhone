@@ -439,11 +439,6 @@ enum : NSInteger {
         fetchRequest.sortDescriptors = [NSArray arrayWithObject:[NSSortDescriptor sortDescriptorWithKey:@"postDate" ascending:NO]];
         
         [[NewStoryListViewController newsCategoryOrder] enumerateObjectsUsingBlock:^(NSNumber *categoryId, NSUInteger idx, BOOL *stop) {
-            if ([categoryId integerValue] == NewsCategoryIdTopNews)
-            {
-                return;
-            }
-            
             NSPredicate *catPredicate = [templatePredicate predicateWithSubstitutionVariables:@{ @"CATEGORY" : categoryId }];
             fetchRequest.predicate = [[NSCompoundPredicate alloc] initWithType:NSAndPredicateType
                                                                  subpredicates:@[notBookmarkedPredicate,
