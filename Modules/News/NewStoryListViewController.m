@@ -348,9 +348,9 @@ enum : NSInteger {
 {
     if (self.isSearching == NO)
     {
-        [self loadStoriesForCategory:self.activeCategoryId
-                       isLoadingMore:NO
-                        forceRefresh:NO];
+        //    [self loadStoriesForCategory:self.activeCategoryId
+        //               isLoadingMore:NO
+        //                forceRefresh:NO];
     }
 
     [self.navScroller selectButtonWithTag:self.activeCategoryId];
@@ -521,7 +521,8 @@ enum : NSInteger {
     if (loadMore)
     {
         id<NSFetchedResultsSectionInfo> sectionInfo = [[self.fetchController sections] objectAtIndex:0];
-        NewsStory *lastStory = [[sectionInfo objects] lastObject];
+        NewsStory *lastStory = [[[sectionInfo objects] sortedArrayUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"story_id"
+                                                                                                                   ascending:NO]]] lastObject];
         lastStoryId = [[lastStory story_id] unsignedIntegerValue];
     }
     
@@ -580,6 +581,7 @@ enum : NSInteger {
             [self setTableFooterLoading:YES
                                animated:YES];
         }
+        
         [self.updateQueue addOperation:operation];
     }
 }
@@ -588,8 +590,7 @@ enum : NSInteger {
                 loadingMore:(BOOL)loadMore
 {
     NSUInteger offset = 0;
-    NSFetchRequest *loadRequest = [NSFetchRequest fetchRequestWithEntityName:NewsStoryEntityName];
-    loadRequest.predicate = [NSPredicate predicateWithFormat:@"(searchResult != nil) && (searchResult == YES)"];
+    NSFetchRequest *loadRequest = [[self.queryFetchController fetchRequest] copy];
     
     if (loadMore)
     {
@@ -598,24 +599,9 @@ enum : NSInteger {
                                                            error:nil];
         offset = [[objectCount objectAtIndex:0] unsignedIntegerValue];
     }
-    else
-    {
-        NSArray *objects = [self.context executeFetchRequest:loadRequest
-                                                       error:nil];
-        for (NewsStory *obj in objects)
-        {
-            obj.searchResult = [NSNumber numberWithBool:NO];
-        }
-        
-        
-        [self.context save:nil];
-    }
 
     if ([query length] > 2)
     {
-        [self setTableFooterLoading:YES
-                           animated:YES];
-        
         StoryUpdateOperation *updateOperation = [[StoryUpdateOperation alloc] initWithQuery:query
                                                                                      offset:offset
                                                                                  fetchLimit:10];
@@ -627,33 +613,42 @@ enum : NSInteger {
             {
                 DDLogError(@"error performing update for query '%@'[%lu,%d]: %@", query, (unsigned long)offset, 10, error);
             }
-            else if ([storyIDs count] == 0)
-            {
-                UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:nil
-                                                                    message:@"No matching articles found."
-                                                                   delegate:self
-                                                          cancelButtonTitle:@"OK"
-                                                          otherButtonTitles:nil];
-                [alertView show];
-            }
             else if (self.isSearching)
             {
-                self.searchController.searchResultsTableView.hidden = NO;
-                [self.searchController hideSearchOverlayAnimated:YES];
-                
-                if ([storyIDs count])
+                if ([storyIDs count] == 0)
                 {
-                    self.searchController.searchResultsTableView.tableFooterView = self.loadMoreView;
+                    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:nil
+                                                                        message:@"No matching articles found."
+                                                                       delegate:self
+                                                              cancelButtonTitle:@"OK"
+                                                              otherButtonTitles:nil];
+                    [alertView show];
                 }
                 else
                 {
-                    self.searchController.searchResultsTableView.tableFooterView = nil;
+                    self.searchController.searchResultsTableView.hidden = NO;
+                    [self.searchController hideSearchOverlayAnimated:YES];
+                    
+                    if ([storyIDs count])
+                    {
+                        self.searchController.searchResultsTableView.tableFooterView = self.loadMoreView;
+                    }
+                    else
+                    {
+                        self.searchController.searchResultsTableView.tableFooterView = nil;
+                    }
+                    
+                    [self setTableFooterLoading:NO
+                                       animated:YES];
                 }
-                
-                [self setTableFooterLoading:NO
-                                   animated:YES];
             }
         };
+        
+        if (self.isSearching)
+        {
+            [self setTableFooterLoading:YES
+                               animated:YES];
+        }
         
         [self.updateQueue cancelAllOperations];
         [self.updateQueue addOperation:updateOperation];
@@ -712,15 +707,7 @@ enum : NSInteger {
         {
             NSFetchRequest *request = self.fetchController.fetchRequest;
             
-            if (NO)//self.activeCategoryId == NewsCategoryIdTopNews)
-            {
-                request.predicate = [NSPredicate predicateWithFormat:@"(topStory != nil) && (topStory == YES)"];
-            }
-            else
-            {
-                request.predicate = [NSPredicate predicateWithFormat:@"ANY categories.category_id == %lu", self.activeCategoryId];
-            }
-            
+            request.predicate = [NSPredicate predicateWithFormat:@"ANY categories.category_id == %lu", self.activeCategoryId];
             [self.fetchController performFetch:nil];
             [self.tableView reloadData];
             
@@ -731,31 +718,28 @@ enum : NSInteger {
     }
 }
 
+- (void)clearQueryResults
+{
+    //Clear out any current search results
+    NSArray *objects = [self.context executeFetchRequest:self.queryFetchController.fetchRequest
+                                                   error:nil];
+    for (NewsStory *obj in objects)
+    {
+        obj.searchResult = [NSNumber numberWithBool:NO];
+    }
+    
+    [self.context save:nil];
+}
+
 - (void)setSearchQuery:(NSString *)searchQuery
 {
     if ([_searchQuery isEqualToString:searchQuery] == NO)
     {
         _searchQuery = searchQuery;
+        [self clearQueryResults];
         
-        //Clear out any current search results
-        NSFetchRequest *loadRequest = [NSFetchRequest fetchRequestWithEntityName:NewsStoryEntityName];
-        loadRequest.predicate = [NSPredicate predicateWithFormat:@"(searchResult != nil) && (searchResult == YES)"];
-        
-        NSArray *objects = [self.context executeFetchRequest:loadRequest
-                                                       error:nil];
-        for (NewsStory *obj in objects)
-        {
-            obj.searchResult = [NSNumber numberWithBool:NO];
-        }
-        
-        [self.context save:nil];
-        
-        
-        if (self.isSearching && [searchQuery length])
-        {
-            [self loadStoriesForQuery:searchQuery
+        [self loadStoriesForQuery:searchQuery
                               loadingMore:NO];
-        }
     }
 }
 
@@ -777,7 +761,6 @@ enum : NSInteger {
     else
     {
         count = [[self.queryFetchController sections] count];
-        NSLog(@"Found %d section (%@)",count,self.queryFetchController);
     }
     
     return count;
@@ -794,6 +777,7 @@ enum : NSInteger {
     else
     {
         count = [[[self.queryFetchController sections] objectAtIndex:section] numberOfObjects];
+        DDLogVerbose(@"found %d rows in section %d", count, section);
     }
     
     return count;
@@ -972,10 +956,10 @@ enum : NSInteger {
                                                                                                      cacheName:nil];
 
         self.queryFetchController = queryController;
-        [self.queryFetchController performFetch:nil];
     }
     
     self.queryFetchController.delegate = self;
+    [self.queryFetchController performFetch:nil];
     
     [UIView transitionWithView:self.view
                       duration:0.4
@@ -1051,9 +1035,17 @@ enum : NSInteger {
 
 - (IBAction)refresh:(id)sender
 {
-    [self loadStoriesForCategory:self.activeCategoryId
-                   isLoadingMore:NO
-                    forceRefresh:YES];
+    if (self.isSearching)
+    {
+        [self loadStoriesForQuery:self.searchQuery
+                      loadingMore:NO];
+    }
+    else
+    {
+        [self loadStoriesForCategory:self.activeCategoryId
+                       isLoadingMore:NO
+                        forceRefresh:YES];
+    }
 }
 
 
@@ -1074,7 +1066,6 @@ enum : NSInteger {
 #pragma mark - MITSearchController Delegation
 - (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar
 {
-    // hide search interface
     [self hideSearchBar];
 }
 
