@@ -75,7 +75,7 @@
 		2C6FE84913B2717700AFD8B8 /* FacilitiesContent.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C6FE84813B2717700AFD8B8 /* FacilitiesContent.m */; };
 		2C7661D41369C466000CA2B0 /* FacilitiesCategory.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C7661D31369C466000CA2B0 /* FacilitiesCategory.m */; };
 		2C82DDAA13BCCA9C0055D96D /* FacilitiesLocation.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C82DDA913BCCA9C0055D96D /* FacilitiesLocation.m */; };
-		2C85DE85164AEE0700C6C4CB /* NewStoryListViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C85DE84164AEE0600C6C4CB /* NewStoryListViewController.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
+		2C85DE85164AEE0700C6C4CB /* StoryListViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C85DE84164AEE0600C6C4CB /* StoryListViewController.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		2C91944C1631CBA700ED97F6 /* NSData+MGTwitterBase64.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C91944B1631CBA700ED97F6 /* NSData+MGTwitterBase64.m */; };
 		2C95A1D3137D677A0025B28D /* FacilitiesRoomViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C95A1D2137D677A0025B28D /* FacilitiesRoomViewController.m */; };
 		2C95A1D8137DB24D0025B28D /* FacilitiesSummaryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C95A1D6137DB24D0025B28D /* FacilitiesSummaryViewController.m */; };
@@ -509,8 +509,8 @@
 		2C7661D31369C466000CA2B0 /* FacilitiesCategory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FacilitiesCategory.m; sourceTree = "<group>"; };
 		2C82DDA813BCCA9C0055D96D /* FacilitiesLocation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FacilitiesLocation.h; sourceTree = "<group>"; };
 		2C82DDA913BCCA9C0055D96D /* FacilitiesLocation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FacilitiesLocation.m; sourceTree = "<group>"; };
-		2C85DE83164AEE0600C6C4CB /* NewStoryListViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NewStoryListViewController.h; sourceTree = "<group>"; };
-		2C85DE84164AEE0600C6C4CB /* NewStoryListViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NewStoryListViewController.m; sourceTree = "<group>"; };
+		2C85DE83164AEE0600C6C4CB /* StoryListViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StoryListViewController.h; sourceTree = "<group>"; };
+		2C85DE84164AEE0600C6C4CB /* StoryListViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StoryListViewController.m; sourceTree = "<group>"; };
 		2C91944A1631CBA700ED97F6 /* NSData+MGTwitterBase64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSData+MGTwitterBase64.h"; sourceTree = "<group>"; };
 		2C91944B1631CBA700ED97F6 /* NSData+MGTwitterBase64.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSData+MGTwitterBase64.m"; sourceTree = "<group>"; };
 		2C95A1D1137D677A0025B28D /* FacilitiesRoomViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FacilitiesRoomViewController.h; sourceTree = "<group>"; };
@@ -2150,8 +2150,8 @@
 				DE81CF6010C6BC390085573D /* NewsModule.h */,
 				DE81CF6110C6BC390085573D /* NewsModule.m */,
 				DE4AAFAC10ED4E63007476D9 /* Model */,
-				2C85DE83164AEE0600C6C4CB /* NewStoryListViewController.h */,
-				2C85DE84164AEE0600C6C4CB /* NewStoryListViewController.m */,
+				2C85DE83164AEE0600C6C4CB /* StoryListViewController.h */,
+				2C85DE84164AEE0600C6C4CB /* StoryListViewController.m */,
 				DE728E6410D6FF4700BFED37 /* StoryDetailViewController.h */,
 				DE728E6510D6FF4700BFED37 /* StoryDetailViewController.m */,
 				DEAFEFA710FFE35B00F0573E /* StoryGalleryViewController.h */,
@@ -2928,7 +2928,7 @@
 				2C2C8A2916386352001A9CF7 /* GDataXMLNode.m in Sources */,
 				2C5F1B38163ABFFB00F8DE0E /* StoryUpdateOperation.m in Sources */,
 				2C5DE3F216417DA8000C48D2 /* StoryParser.m in Sources */,
-				2C85DE85164AEE0700C6C4CB /* NewStoryListViewController.m in Sources */,
+				2C85DE85164AEE0700C6C4CB /* StoryListViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

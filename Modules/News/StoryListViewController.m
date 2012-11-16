@@ -1,6 +1,6 @@
 #import <CoreData/CoreData.h>
 
-#import "NewStoryListViewController.h"
+#import "StoryListViewController.h"
 #import "NavScrollerView.h"
 #import "MITUIConstants.h"
 #import "StoryThumbnailView.h"
@@ -36,7 +36,7 @@ NSString *const NewsCategoryManagement = @"Management";
 NSString *const NewsCategoryArchitecture = @"Architecture";
 NSString *const NewsCategoryHumanities = @"Humanities";
 
-@interface NewStoryListViewController () <UITableViewDataSource,UITableViewDelegate,NSFetchedResultsControllerDelegate,UISearchBarDelegate,MITSearchDisplayDelegate,NavScrollerDelegate>
+@interface StoryListViewController () <UITableViewDataSource,UITableViewDelegate,NSFetchedResultsControllerDelegate,UISearchBarDelegate,MITSearchDisplayDelegate,NavScrollerDelegate>
 @property (nonatomic,strong) NSOperationQueue *updateQueue;
 
 @property (nonatomic,strong) NSManagedObjectContext *context;
@@ -79,7 +79,7 @@ enum : NSInteger {
     StoryNavButtonBookmarkTag = NSIntegerMax
 };
 
-@implementation NewStoryListViewController
+@implementation StoryListViewController
 + (NSArray*)newsCategoryOrder
 {
     return @[@(NewsCategoryIdTopNews),
@@ -161,8 +161,8 @@ enum : NSInteger {
             [navScroller addButton:bookmarkButton shouldHighlight:NO];
         }
         
-        NSArray *orderedCategories = [NewStoryListViewController newsCategoryOrder];
-        NSDictionary *categoryNames = [NewStoryListViewController newsCategoryNames];
+        NSArray *orderedCategories = [StoryListViewController newsCategoryOrder];
+        NSDictionary *categoryNames = [StoryListViewController newsCategoryNames];
         
         for (NSNumber *categoryId in orderedCategories)
         {
@@ -403,7 +403,7 @@ enum : NSInteger {
     }
     
     NSPredicate *categoryPredicate = [NSPredicate predicateWithFormat:@"category_id == $CATEGORY"];
-    for (NSNumber *categoryId in [NewStoryListViewController newsCategoryNames])
+    for (NSNumber *categoryId in [StoryListViewController newsCategoryNames])
     {
         NSPredicate *filterPredicate = [categoryPredicate predicateWithSubstitutionVariables:@{ @"CATEGORY" : categoryId }];
         NSManagedObject *category = [[categories filteredArrayUsingPredicate:filterPredicate] lastObject];
@@ -461,7 +461,7 @@ enum : NSInteger {
         NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:NewsStoryEntityName];
         fetchRequest.sortDescriptors = [NSArray arrayWithObject:[NSSortDescriptor sortDescriptorWithKey:@"postDate" ascending:NO]];
         
-        [[NewStoryListViewController newsCategoryOrder] enumerateObjectsUsingBlock:^(NSNumber *categoryId, NSUInteger idx, BOOL *stop) {
+        [[StoryListViewController newsCategoryOrder] enumerateObjectsUsingBlock:^(NSNumber *categoryId, NSUInteger idx, BOOL *stop) {
             NSPredicate *catPredicate = [templatePredicate predicateWithSubstitutionVariables:@{ @"CATEGORY" : categoryId }];
             fetchRequest.predicate = [[NSCompoundPredicate alloc] initWithType:NSAndPredicateType
                                                                  subpredicates:@[notBookmarkedPredicate,
@@ -508,7 +508,7 @@ enum : NSInteger {
         }
         else if (ddLogLevel == LOG_LEVEL_VERBOSE)
         {
-            for (NSNumber *categoryId in [NewStoryListViewController newsCategoryOrder])
+            for (NSNumber *categoryId in [StoryListViewController newsCategoryOrder])
             {
                 NSFetchRequest *countRequest = [NSFetchRequest fetchRequestWithEntityName:NewsStoryEntityName];
                 countRequest.predicate = [templatePredicate predicateWithSubstitutionVariables:@{ @"CATEGORY" : categoryId }];

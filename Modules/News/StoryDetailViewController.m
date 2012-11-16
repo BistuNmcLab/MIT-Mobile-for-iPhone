@@ -1,7 +1,7 @@
 #import <QuartzCore/QuartzCore.h>
 
 #import "StoryDetailViewController.h"
-#import "NewStoryListViewController.h"
+#import "StoryListViewController.h"
 
 #import "MITConstants.h"
 #import "ConnectionDetector.h"

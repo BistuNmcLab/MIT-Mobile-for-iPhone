@@ -28,7 +28,7 @@ extern NSString *const NewsCategoryHumanities;
 - (NewsStory*)selectPreviousStory:(NewsStory*)currentStory;
 @end
 
-@interface NewStoryListViewController : UIViewController <StoryListPagingDelegate>
+@interface StoryListViewController : UIViewController <StoryListPagingDelegate>
 @property (nonatomic,assign) NSInteger activeCategoryId;
 @property (nonatomic,assign) NSTimeInterval updateInterval;
 @end

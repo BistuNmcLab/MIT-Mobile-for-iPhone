@@ -1,6 +1,6 @@
 #import "NewsModule.h"
 #import "StoryListViewController.h"
-#import "NewStoryListViewController.h"
+#import "StoryListViewController.h"
 
 #import "MITModule+Protected.h"
 
@@ -21,7 +21,7 @@
 
 - (void)loadModuleHomeController
 {
-    StoryListViewController *controller = [[[NewStoryListViewController alloc] init] autorelease];
+    StoryListViewController *controller = [[[StoryListViewController alloc] init] autorelease];
     
     self.moduleHomeController = controller;
 }
