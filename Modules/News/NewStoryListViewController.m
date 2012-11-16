@@ -29,19 +29,22 @@
 #define BOOKMARK_BUTTON_TAG 7948
 
 @interface NewStoryListViewController () <UITableViewDataSource,UITableViewDelegate,NSFetchedResultsControllerDelegate,UISearchBarDelegate,MITSearchDisplayDelegate,NavScrollerDelegate>
+@property (nonatomic,strong) NSOperationQueue *updateQueue;
+
 @property (nonatomic,strong) NSManagedObjectContext *context;
 @property (nonatomic,strong) NSFetchedResultsController *fetchController;
-@property (nonatomic,strong) NSOperationQueue *updateQueue;
+@property (nonatomic,strong) NSFetchedResultsController *queryFetchController;
+@property (nonatomic,strong) UIView *loadMoreView;
+@property (nonatomic,strong) id observerIdentifier;
+
 @property (nonatomic,strong) NSString *searchQuery;
 @property (nonatomic,strong) MITSearchDisplayController *searchController;
 
-@property (nonatomic,strong) NSFetchedResultsController *queryFetchController;
 
 @property (nonatomic,weak) NavScrollerView *navScroller;
 @property (nonatomic,weak) UITableView *tableView;
 @property (nonatomic,weak) UIView *activityView;
 @property (nonatomic,weak) UISearchBar *searchBar;
-@property (nonatomic,strong) UIView *loadMoreView;
 
 @property (nonatomic,assign) BOOL hasBookmarks;
 @property (nonatomic,assign) BOOL isSearching;
@@ -107,6 +110,11 @@ enum : NSInteger {
         _activeCategoryId = -1;
     }
     return self;
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self.observerIdentifier];
 }
 
 - (void)loadView
@@ -342,6 +350,13 @@ enum : NSInteger {
     }
     
     self.activeCategoryId = NewsCategoryIdTopNews;
+    
+    self.observerIdentifier = [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationWillTerminateNotification
+                                                                                object:nil
+                                                                                 queue:[NSOperationQueue mainQueue]
+                                                                            usingBlock:^(NSNotification *note) {
+                                                                                [self pruneStories:NO];
+                                                                            }];
 }
 
 - (void)viewWillAppear:(BOOL)animated
