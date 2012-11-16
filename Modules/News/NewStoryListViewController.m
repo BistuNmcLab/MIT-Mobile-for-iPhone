@@ -1,6 +1,5 @@
 #import <CoreData/CoreData.h>
 
-#import "StoryListViewController.h"
 #import "NewStoryListViewController.h"
 #import "NavScrollerView.h"
 #import "MITUIConstants.h"
@@ -10,6 +9,7 @@
 #import "CoreDataManager.h"
 #import "StoryUpdateOperation.h"
 #import "StoryDetailViewController.h"
+#import "MITSearchDisplayController.h"
 
 #define SCROLL_TAB_HORIZONTAL_PADDING 5.0
 #define SCROLL_TAB_HORIZONTAL_MARGIN  5.0
@@ -27,6 +27,14 @@
 
 #define SEARCH_BUTTON_TAG 7947
 #define BOOKMARK_BUTTON_TAG 7948
+
+NSString *const NewsCategoryTopNews = @"Top News";
+NSString *const NewsCategoryCampus = @"Campus";
+NSString *const NewsCategoryEngineering = @"Engineering";
+NSString *const NewsCategoryScience = @"Science";
+NSString *const NewsCategoryManagement = @"Management";
+NSString *const NewsCategoryArchitecture = @"Architecture";
+NSString *const NewsCategoryHumanities = @"Humanities";
 
 @interface NewStoryListViewController () <UITableViewDataSource,UITableViewDelegate,NSFetchedResultsControllerDelegate,UISearchBarDelegate,MITSearchDisplayDelegate,NavScrollerDelegate>
 @property (nonatomic,strong) NSOperationQueue *updateQueue;
